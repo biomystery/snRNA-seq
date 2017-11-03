@@ -1,0 +1,20 @@
+{
+    "collab_server" : "",
+    "contents" : "\n#### This is for Version 2.0 of Seurat\nrequire(Seurat)\nrequire(tidyverse)\n\n\n#1st step in processing the umi file, check out the plots generated here to see how your data look\n#function takes in your tsv file, and what you'd like to name your project in quotes ie: \"project\"\nprocess_umi<-function(file,name){\n  tissue.data = read.table(file, sep = '\\t', header=TRUE, row.names=1)\n  tissue <- CreateSeuratObject(raw.data = tissue.data,project=name, min.cells=10, min.genes=200, normalization.method = \"LogNormalize\",do.scale=TRUE)\n  mito.genes <- grep(\"^mt-\", rownames(tissue@data), value = T)\n  percent.mito <- colSums(as.array(expm1(tissue@data[mito.genes, ]))) / colSums(as.array(expm1(tissue@data)))\n  tissue <- AddMetaData(tissue, percent.mito, \"percent.mito\")\n  VlnPlot(tissue, c(\"nGene\", \"nUMI\", \"percent.mito\"), nCol = 3)\n  GenePlot(tissue, \"nUMI\", \"nGene\")\n  return (tissue)}\n\n## to generate TSNE Plots (give seurat object, low/high umi estimates for doublet filtering; Density paramter for dbscan clustering)\nprocess_umi_step2 <- function (tissue, density_param,cutoff){\n  val<-cutoff  #find_umi_cutoff based on plot of nUMI vs nGenes\n  tissue <- SubsetData(tissue, subset.name = \"nUMI\", accept.high = val) \n  tissue <- FindVariableGenes(tissue ,do.plot = FALSE)\n  tissue <- RunPCA(tissue,do.print = FALSE, pc.genes = tissue@var.genes)\n  tissue=ProjectPCA(tissue,do.print=FALSE)\n  tissue <- RunTSNE(tissue, dims.use = 1:11, do.fast = T)\n  tissue=FindClusters(tissue,k.param=density_param, dims.use = 1:13)\n  TSNEPlot(tissue,do.label = TRUE)\n  return (tissue)}\n\n##to create average umi tables with all genes for each clusters \nmake_umi_table<-function(tissue,cid,outfile)\n{\n  c<-tissue@raw.data[,rownames(subset(tissue@meta.data, tissue@meta.data$res.0.8==cid))]\n  print (length(colnames(c))) # this is the number of cells in the cluster \n  write.table(data.frame(rowMeans(c, na.rm=FALSE, dims=1)), sep = \"\\t\",outfile) \n}\n\n\n#to identify the marker genes and write umi tables \nidentify_clusters <-function(tissue,ncluster,type) {\n  tissue@meta.data$orig.ident<-tissue@meta.data$res.0.8\n  tissue=SetAllIdent(tissue,id = \"orig.ident\")\n  for (i in (0:ncluster)){\n    marker=FindMarkers(tissue,i)\n    if (length(colnames(tissue@raw.data[,rownames(subset(tissue@meta.data, tissue@meta.data$res.0.8==i))]))>100){\n      marker<-marker[rownames(as.matrix(rowSums(tissue@raw.data[rownames(marker),])) > .05*length(rownames(marker))),]\n    }\n    else{\n      marker<-marker[rownames(as.matrix(rowSums(tissue@raw.data[rownames(marker),])) > 5),]\n    }\n    write.csv(marker,paste0(type,\".markergenes\",i,'.csv'))\n    make_umi_table(tissue,i,paste0(type,\"cluster\",i,\"averageumi.txt\"))}}\n\n  \n    \n# To Plot Genes of your choice in the clusters and clean up your TSNE plot (input is your seurat object and a list of cluster ids that you want to remove from your plot\nclean_tsne<-function(tissue, badcluster, genelist){\n  TSNEPlot(tissue, do.return = T, no.legend = FALSE,cells.use =rownames(tissue@meta.data[!(tissue@eta.data$res.0.8 %in% badcluster),]))\n  FeaturePlot(tissue,genelist,pt.size = 1,col = c('grey','red'))}\n\n\n###example usage###########\n## LI <-process_umi('~/Documents/Ren_lab/sc/LI.counts.tsv','LI') # name of file, what I want to call the seurat object\n## LI<-process_umi_step2(LI,5000, 6000, 1) # umi low and high range for doublet limit, density paramater for clustering for TSNE \n##identify_clusters<-function(LI,6,\"Liver\") #of clusters, name for saving \n",
+    "created" : 1509663238037.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "2184783141",
+    "id" : "58A4BA80",
+    "lastKnownWriteTime" : 1509663274,
+    "last_content_update" : 1509663274912,
+    "path" : "~/Dropbox/Projects/UCSD_2017/snRNA-seq/Habib2017/post_processing.R",
+    "project_path" : "post_processing.R",
+    "properties" : {
+    },
+    "relative_order" : 2,
+    "source_on_save" : false,
+    "source_window" : "",
+    "type" : "r_source"
+}
