@@ -15,6 +15,7 @@ require(Seurat)
 
 # create obj --------------------------------------------------------------
 file ="./data/GTEx_droncseq_hip_pcf.umi_counts.txt"
+file<- "./data/human/Human_Processed_GTEx_Data.DGE.UMI-Counts.txt"
 name ="hip_pcf"
 require(data.table)
 tissue.data[1:10,1:10]
@@ -31,6 +32,8 @@ process_umi<-function(file,name,min.cell=10,min.genes=200,...){
 }
 
 tissue <- process_umi(file,name)
+
+
 # find variable genes  ----------------------------------------------------
 tissue <- FindVariableGenes(tissue,do.plot = T)
 
