@@ -65,7 +65,11 @@ percent.mito <- colSums(tissue@raw.data[mito.genes, ]) / colSums(tissue@raw.data
 
 # AddMetaData adds columns to object@meta.data, and is a great place to stash QC stats
 tissue <- AddMetaData(object = tissue, metadata = percent.mito, col.name = "percent.mito")
-VlnPlot(object = tissue, features.plot = c("nGene", "nUMI", "percent.mito"), nCol = 3)
+
+
+# AddMeta: total reads 
+tissue <- AddMetaData(object = tissue,metadata = colSums(tissue@raw.data),col.name = "total.reads")
+VlnPlot(object = tissue, features.plot = c("nGene", "nUMI", "percent.mito","total.reads"), nCol = 4)
 
 # GenePlot is typically used to visualize gene-gene relationships, but can be used for anything 
 # calculated by the object, i.e. columns in object@meta.data, PC scores etc.
@@ -75,13 +79,11 @@ par(mfrow = c(1, 2))
 GenePlot(object = tissue, gene1 = "nUMI", gene2 = "percent.mito")
 GenePlot(object = tissue, gene1 = "nUMI", gene2 = "nGene")
 
-# We filter out cells that have unique gene counts over 2,500 or less than 200
+# We filter out cells that have unique gene counts less than 200 and total reads less than 10,000
 # Note that low.thresholds and high.thresholds are used to define a 'gate'
 # -Inf and Inf should be used if you don't want a lower or upper threshold.
-#tissue <- FilterCells(object = tissue, subset.names = c("nGene", "percent.mito"), low.thresholds = c(200, -Inf), high.thresholds = c(2500, 0.05))
 
-
-tissue <- FilterCells(object = tissue, subset.names = c("nGene", "percent.mito"), low.thresholds = c(200, -Inf), high.thresholds = c(2500, 0.05))
+tissue <- FilterCells(object = tissue, subset.names = c("nGene", "total.reads"), low.thresholds = c(200, 10000), high.thresholds = c(Inf, Inf))
 ```
 ***
 
