@@ -40,8 +40,11 @@ signif(dense.size / sparse.size,4)
 ```{r create.object, results='hide', message=FALSE}
 # Initialize the Seurat object with the raw (non-normalized data).
 # Keep all genes expressed in >= 3 cells (~0.1% of the data). Keep all cells with at least 200 detected genes
-tissue <- CreateSeuratObject(raw.data = tissue, min.cells = 10, min.genes = 200, project = "hip_pcf")
+tissue <- CreateSeuratObject(raw.data = tissue,  project = "hip_pcf")
 levels(tissue@ident)
+```
+```{r}
+dim(tissue@raw.data)
 ```
 
 ***
@@ -101,7 +104,7 @@ tissue <- NormalizeData(object = tissue, normalization.method = "LogNormalize", 
 Seurat calculates highly variable genes and focuses on these for downstream analysis. **`FindVariableGenes`** calculates the average expression and dispersion for each gene, places these genes into bins, and then calculates a z-score for dispersion within each bin. This helps control for the relationship between variability and average expression. This function is unchanged from (Macosko *et al*.), but new methods for variable gene expression identification are coming soon. We suggest that users set these parameters to mark visual outliers on the dispersion plot, but the exact parameter settings may vary based on the data type, heterogeneity in the sample, and normalization strategy. The parameters here identify ~2,000 variable genes, and represent typical parameter settings for UMI data that is normalized to a total of 1e4 molecules.
 
 ```{r var_genes, fig.height=7, fig.width=11, results='hide'}
-tissue <- FindVariableGenes(object = tissue, mean.function = ExpMean, dispersion.function = LogVMR, x.low.cutoff = 0.005, x.high.cutoff = 3, y.cutoff = 0.2)
+tissue <- FindVariableGenes(object = tissue, mean.function = ExpMean, dispersion.function = LogVMR, x.low.cutoff = 0.005,  y.cutoff = 0.2)
 ```
 
 ```{r len_var_genes}
@@ -119,7 +122,7 @@ We can regress out cell-cell variation in gene expression driven by batch (if ap
 Seurat v2.0 implements this regression as part of the data scaling process. Therefore, the `RegressOut` function has been deprecated, and replaced with the vars.to.regress argument in `ScaleData`.
 
 ```{r regress, fig.height=7, fig.width=11, results='hide'}
-tissue <- ScaleData(object = tissue, vars.to.regress = c("nUMI", "percent.mito"))
+tissue <- ScaleData(object = tissue, vars.to.regress = c("nUMI", "nGene"))
 ```
 ***
 
@@ -226,7 +229,7 @@ TSNEPlot(object = tissue)
 
 You can save the object at this point so that it can easily be loaded back in without having to rerun the computationally intensive steps performed above, or easily shared with collaborators.
 ```{r saveobject}
-save(tissue, file = "~/Projects/datasets/tissue3k/tissue_tutorial.Robj")
+save(tissue, file = "./da")
 ```
 
 ***
