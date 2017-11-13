@@ -34,6 +34,10 @@ write(paste(rep("#", 100), collapse = ""), "log", append = T)
 print("... Running 0.Checking input gene expression matrix")
 write("... Running 0.Checking input gene expression matrix", "log", append = T)
 gene_mat <- as.matrix(read.table(expression_matix, row.names = 1)) 
+colnames(gene_mat) <- gene_mat[1,]
+gene_mat<- gene_mat[-1,]
+gene_mat <- mapply(gene_mat,FUN = as.numeric)
+
 if (expression_type == 2) {
   gene_mat[gene_mat < 1] <- 1 #genes with expression level < 1 are considered not expressed
   gene_mat <- log2(gene_mat)  
