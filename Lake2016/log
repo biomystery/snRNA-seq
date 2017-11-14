@@ -28,3 +28,28 @@ COMPUTING OVERDISPERSION
 ... Writing expression variation stat to 02.Expression-variation_stat.txt
 ... Done
 ... Running 2. Computing over-dispersed genes
+2017-11-13 03-PM
+####################################################################################################
+### Clustering and Classification
+###
+### Version 1.1
+### Last updated, Mar 2016
+### Rizi Ai
+### riai@ucsd.edu
+### University of California San Diego
+####################################################################################################
+... Running 0.Checking input gene expression matrix
+... Done
+################################################################################
+COMPUTING OVERDISPERSION
+################################################################################
+... Running 1.Calculating gene expression variation
+... Writing expression variation stat to 02.Expression-variation_stat.txt
+... Done
+... Running 2. Computing over-dispersed genes
+... Writing over-dispersed genes to 04.Over-dispersed_gene-list.txt
+... Done
+################################################################################
+CLUSTERING STEP
+################################################################################
+... Running 3. Initial hierarchical clustering by over-dispersed genes

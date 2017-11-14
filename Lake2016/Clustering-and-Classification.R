@@ -12,6 +12,7 @@
 ###################################################################################################
 library(randomForest)
 library(gplots)
+library(data.table)
 ###
 expression_matix = "/Users/frank/Dropbox/Projects/UCSD_2017/snRNA-seq/Habib2017/data/mouse/Mouse_Processed_GTEx_Data.DGE.log-UMI-Counts.txt" # input gene expression matrix
 expression_type = 1 # "1" for log2 expression (eg. log2TPM, log2FPKM, log2Counts); 
@@ -33,10 +34,8 @@ write(paste(rep("#", 100), collapse = ""), "log", append = T)
 ###################################################################################################
 print("... Running 0.Checking input gene expression matrix")
 write("... Running 0.Checking input gene expression matrix", "log", append = T)
-gene_mat <- as.matrix(read.table(expression_matix, row.names = 1)) 
-colnames(gene_mat) <- gene_mat[1,]
-gene_mat<- gene_mat[-1,]
-gene_mat <- mapply(gene_mat,FUN = as.numeric)
+gene_mat <- as.matrix(read.table(expression_matix, row.names = 1,skip = 1)) 
+
 
 if (expression_type == 2) {
   gene_mat[gene_mat < 1] <- 1 #genes with expression level < 1 are considered not expressed
