@@ -3,54 +3,82 @@
 ## pariwise correlation of the average expression for the genes 
 ## in each cell-type signature defined by our data and cell types defined by Drunc-seq
 
+# load our expression data  -----------------------------------------------
 
-# load signature genes for cell type defined by us  -----------------------
+# expression 
+our.human <- read.table("./data/new_analysis/human/fc_hc_latest_svd_umi_upregmarkers_nodup.txt")
+dim(our.human)#3508 
 
-anno.cell <- read.table("./data/new_analysis/human/fc_hc_latest_metadata.txt")
-anno.sigGenes <- lapply(1:11,function(x){
-  fn <- paste0("./data/new_analysis/mouse/AFB_new_analysis/afb_merged_final.markergenes",x,".csv") 
-  data.frame(genes=read.csv(fn,header = T,stringsAsFactors = F)$X,clust=x)
-})
-anno.sigGenes <- do.call(rbind,anno.sigGenes)
-dim(anno.sigGenes)#5707 
+all.equal(rownames(our.mouse),rownames(druncseq.mouse))
 
-# load druncseq avg expression data  --------------------------------------
+# load druncseq expression data  --------------------------------------
 
 # expression 
 require(data.table)
-dat.exp.log <- fread("./data/new_analysis/human/fc_hc_latest_scale_umi.txt")
-dat.exp.log <- dat.exp.log[GENE%in% anno.sigGenes$genes]
-dat.exp.log.t <- dcast(melt(dat.exp.log,id.vars = "GENE"),variable ~ GENE)
+require(Seurat)
+require(tidyverse)
 
+
+dat.exp <- fread("./data/human/GTEx_droncseq_hip_pcf.umi_counts.txt")
+setDF(dat.exp)
+dat.exp <- dat.exp%>% column_to_rownames("V1")
+
+dim(dat.exp) # 32111 by 14963 
+
+# seurat object 
+droncseq.human <- CreateSeuratObject(raw.data = dat.exp, min.cells = 3, min.genes = 200, 
+                           project = "snRNAseq")
+
+#  mito
+mito.genes <- grep(pattern = "^MT-", x = rownames(x = droncseq.human@data), value = TRUE)
+percent.mito <- Matrix::colSums(droncseq.human@raw.data[mito.genes, ])/Matrix::colSums(droncseq.human@raw.data)
+droncseq.human<- AddMetaData(object = droncseq.human, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = droncseq.human, features.plot = c("nGene", "nUMI", "percent.mito"), nCol = 3)
+
+# normalization 
+droncseq.human <- NormalizeData(object = droncseq.human, normalization.method = "LogNormalize", 
+                      scale.factor = 10000)
+
+# variable genes
+droncseq.human <- FindVariableGenes(object = droncseq.human, mean.function = ExpMean, dispersion.function = LogVMR, 
+                          x.low.cutoff = 0.0125, x.high.cutoff = 3, y.cutoff = 0.5)
+
+length(x = droncseq.human@var.genes)
+
+# scale data 
+droncseq.human <- ScaleData(object = droncseq.human, vars.to.regress = c("nUMI", "percent.mito"))
+dim(droncseq.human@scale.data) #26805 14963
+droncseq.human <- droncseq.human@scale.data
+genes <- intersect(rownames(our.human),rownames(droncseq.human))
+our.human <- our.human[genes,]
+droncseq.human <- droncseq.human[genes,]
+saveRDS(droncseq.human,file="droncseq.scaled.log.umi.Rds")
+
+# avg  druncseq expression data  --------------------------------------
 # cell id 
-dat <- read.csv(file = "./data/mouse/Table3_Data_Info_mouse.csv",skip = 27,stringsAsFactors = F)[,-8]
+dat <- read.csv(file = "./data/human/Table7_data_info_human.csv",skip = 20,stringsAsFactors = F)[,-6]
 colnames(dat) <-sub("X.","",colnames(dat))
+all(dat$Cell.ID %in% colnames(droncseq.human)) # True 
+dat <- dat %>% filter(! Cluster.ID %in% c(16,17,18))
+dat <- dat %>% mutate(Cluster.Name.simple = sub("[1-3]","",Cluster.Name))
+dat <- dat %>% column_to_rownames("Cell.ID")
+dat <- dat[genes,]
 
 # merge data
-dat.exp.log.m <- merge(dat.exp.log.t,dat[,c("Cell.ID","Cluster.name")],by.y = "Cell.ID", by.x = "variable")
-colnames(dat.exp.log.m)[1]<- "Cell.ID"
+tmp <- as.data.frame(t(droncseq.human) )
+tmp <- cbind(tmp,dat[rownames(tmp),c("Cluster.Name","Cluster.Name.simple")])
+droncseq.human<- tmp
 
-# change to long 
-dat.exp.log.l <- melt(dat.exp.log.m,id.vars = c("Cell.ID","Cluster.name"))
-head(dat.exp.log.l)
+droncseq.human.l <- droncseq.human %>% gather(key="gene",value = "val",1:3287)
 
 # avg
-dat.exp.log.avg <- dat.exp.log.l %>% group_by(variable,Cluster.name) %>% 
-  summarise(mean.exp=mean(value,na.rm=T))
-
-dat.exp.log.avg <- dat.exp.log.l %>% group_by(variable,Cluster.name) %>% 
-  summarise(mean.exp=transfunc(value))
-
 transfunc <- function(x) log2(sum(2^x-1)/length(x)+1)
-
-dat.exp.log.avg.2<- dat.exp.log.avg; 
-dat.exp.log.avg.2$Cluster.name <- sub("[0-9]","",dat.exp.log.avg$Cluster.name)
-dat.exp.log.avg.2<- dat.exp.log.avg.2 %>% group_by(variable,Cluster.name) %>% 
-  summarise(mean.exp=mean(mean.exp,na.rm=T))
+droncseq.human.avg  <- droncseq.human.l %>% group_by(gene,Cluster.Name) %>% 
+  summarise(mean.exp=mean(val,na.rm=T))
 
 
 # spread 
-dat.exp.log.avg.s <- dat.exp.log.avg%>% spread(key = Cluster.name,value = mean.exp)
+droncseq.human.avg.s <- droncseq.human.avg%>% spread(key = Cluster.Name,value = mean.exp)
 druncseq.mouse <- dat.exp.log.avg.s[,-ncol(dat.exp.log.avg.s)]
 
 druncseq.mouse <- as.data.frame(druncseq.mouse)
@@ -63,18 +91,7 @@ druncseq.mouse.2 <- as.data.frame(druncseq.mouse.2)
 rownames(druncseq.mouse.2) <- druncseq.mouse.2$variable; druncseq.mouse.2$variable <- NULL 
 
 
-# load our expression data  -----------------------------------------------
 
-# expression 
-require(data.table)
-dat.exp.log <- fread("./data/new_analysis/mouse/AFB_new_analysis/afb_merged_final_umi_allgenes.txt")
-our.mouse <- dat.exp.log[V1 %in% rownames(druncseq.mouse)]
-setDF(our.mouse)
-rownames(our.mouse) <- our.mouse$V1;our.mouse$V1 <- NULL 
-
-our.mouse <- our.mouse[rownames(druncseq.mouse),]
-
-all.equal(rownames(our.mouse),rownames(druncseq.mouse))
 
 
 # correlation matrix  -----------------------------------------------------
