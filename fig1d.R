@@ -80,7 +80,7 @@ all.equal(rownames(our.mouse),rownames(druncseq.mouse))
 # correlation matrix  -----------------------------------------------------
 our.mouse <- log2(our.mouse+1)
 calcCormat <- function(a,b) apply(a,2,function(x) apply(b,2,function(y) cor(x,y,method = "spearman")))
-calcCormat <- function(a,b) apply(a,2,function(x) apply(b,2,function(y) cor(x,y)))
+#calcCormat <- function(a,b) apply(a,2,function(x) apply(b,2,function(y) cor(x,y)))
 cor.mat <- calcCormat(our.mouse,druncseq.mouse)
 cor.mat.2 <- calcCormat(our.mouse,druncseq.mouse.2)
 
@@ -92,6 +92,8 @@ ggplot(pd,aes(Druncseq,ours))+
 
 if(T){
   pdf(file =   "fig1d.pdf",width = 7,height = 7)
+  cols=colorRampPalette(c(                        "white",
+                          rgb(203/255,72/255,85/255)))(11)
   pheatmap(cor.mat,scale = "none",cluster_cols = T,cluster_rows = T,colorRampPalette(brewer.pal(9,"Reds"))(11),
            cellwidth = 12,cellheight = 12,breaks = seq(0.3,0.85,by = 0.05),
            main = "Mouse pair-wised Spearman's correlation \nof avg expression between our data (row) and \n drunc-seq (column) from our signature genes")
