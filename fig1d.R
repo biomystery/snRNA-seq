@@ -3,7 +3,7 @@
 ## pariwise correlation of the average expression for the genes 
 ## in each cell-type signature defined by our data and cell types defined by Drunc-seq
 
-
+source('./libs.R')
 # load signature genes for cell type defined by us  -----------------------
 
 anno.cell <- read.table("./data/new_analysis/mouse/AFB_new_analysis/afb_merged_svdmeta_data")
@@ -17,7 +17,7 @@ dim(anno.sigGenes)#5707
 # load druncseq avg expression data  --------------------------------------
 
 # expression 
-require(data.table)
+
 dat.exp.log <- fread("./data/mouse/Mouse_Processed_GTEx_Data.DGE.log-UMI-Counts.txt")
 dat.exp.log <- dat.exp.log[GENE%in% anno.sigGenes$genes]
 dat.exp.log.t <- dcast(melt(dat.exp.log,id.vars = "GENE"),variable ~ GENE)
@@ -66,7 +66,6 @@ rownames(druncseq.mouse.2) <- druncseq.mouse.2$variable; druncseq.mouse.2$variab
 # load our expression data  -----------------------------------------------
 
 # expression 
-require(data.table)
 dat.exp.log <- fread("./data/new_analysis/mouse/AFB_new_analysis/afb_merged_final_umi_allgenes.txt")
 our.mouse <- dat.exp.log[V1 %in% rownames(druncseq.mouse)]
 setDF(our.mouse)
@@ -89,6 +88,8 @@ ggplot(pd,aes(Druncseq,ours))+
   geom_tile(aes(fill=value))+
   geom_text(aes(label=round(value,1)))+
   scale_fill_gradient(low = "white",high = "red")+theme_bw()
+
+
 
 if(T){
   pdf(file =   "fig1d.pdf",width = 7,height = 7)

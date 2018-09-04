@@ -1,55 +1,73 @@
-# Human data compared to druncseq 
 
-## pariwise correlation of the average expression for the genes 
-## in each cell-type signature defined by our data and cell types defined by Drunc-seq
-source('./libs.R')
-# load our expression data  -----------------------------------------------
+# load raw data  ----------------------------------------------------------
+require(data.table)
+res <- fread("./data/lake_nbt4038_2017/assign.csv") # 36166 - nuclei - matched 
+cnt.C <- fread("./data/lake_nbt4038_2017/GSE97930_CerebellarHem_snDrop-seq_UMI_Count_Matrix_08-01-2017.txt") #19368 
+cnt.F <- fread("./data/lake_nbt4038_2017/GSE97930_FrontalCortex_snDrop-seq_UMI_Count_Matrix_08-01-2017.txt") # 10319
+cnt.V <- fread("./data/lake_nbt4038_2017/GSE97930_VisualCortex_snDrop-seq_UMI_Count_Matrix_08-01-2017.txt") # 5602 
 
-# expression 
-our.human <- read.table("./data/new_analysis/human/fc_hc_latest_svd_umi_upregmarkers_nodup.txt")
-dim(our.human)#3508 
+ncol(cnt.C)+ncol(cnt.F)+ncol(cnt.V) -3 #35289
+# about 877 nucleus with unknow sources 
 
-# load druncseq expression data  --------------------------------------
+# merge 
+require(tidyverse)
+cnt <- merge(cnt.C,cnt.F,by = "V1",all = T)
+rm(cnt.C);rm(cnt.F)
+cnt.2 <- merge(cnt.V,cnt,by = "V1",all = T)
+cnt.2 <- cnt %>% full_join(cnt.V,by = "V1")
+raw<- list(cnt=cnt.2,res=res)
+saveRDS(raw,"./data/lake_nbt4038_2017/raw.rds")
 
-## process droncseq data
-if(F){
-  # expression 
-  dat.exp <- fread("./data/human/GTEx_droncseq_hip_pcf.umi_counts.txt")
-  setDF(dat.exp)
-  dat.exp <- dat.exp%>% column_to_rownames("V1")
-  
-  dim(dat.exp) # 32111 by 14963 
-  
-  # seurat object 
-  droncseq.human <- CreateSeuratObject(raw.data = dat.exp, min.cells = 3, min.genes = 200, 
-                                       project = "snRNAseq")
-  
-  #  mito
-  mito.genes <- grep(pattern = "^MT-", x = rownames(x = droncseq.human@data), value = TRUE)
-  percent.mito <- Matrix::colSums(droncseq.human@raw.data[mito.genes, ])/Matrix::colSums(droncseq.human@raw.data)
-  droncseq.human<- AddMetaData(object = droncseq.human, metadata = percent.mito, col.name = "percent.mito")
-  VlnPlot(object = droncseq.human, features.plot = c("nGene", "nUMI", "percent.mito"), nCol = 3)
-  
-  # normalization 
-  droncseq.human <- NormalizeData(object = droncseq.human, normalization.method = "LogNormalize", 
-                                  scale.factor = 10000)
-  
-  # variable genes
-  droncseq.human <- FindVariableGenes(object = droncseq.human, mean.function = ExpMean, dispersion.function = LogVMR, 
-                                      x.low.cutoff = 0.0125, x.high.cutoff = 3, y.cutoff = 0.5)
-  
-  length(x = droncseq.human@var.genes)
-  
-  # scale data 
-  droncseq.human <- ScaleData(object = droncseq.human, vars.to.regress = c("nUMI", "percent.mito"))
-  dim(droncseq.human@scale.data) #26805 14963
-  droncseq.human <- droncseq.human@scale.data
-  genes <- intersect(rownames(our.human),rownames(droncseq.human))
-  our.human <- our.human[genes,]
-  droncseq.human <- droncseq.human[genes,]
-  saveRDS(droncseq.human,file="droncseq.scaled.log.umi.Rds")
-  }
-droncseq.human <- readRDS(file = "./data/droncseq.scaled.log.umi.Rds")
+raw <- readRDS("./data/lake_nbt4038_2017/raw.rds")
+# normalize ---------------------------------------------------------------
+require(Seurat)
+
+# filtering by res ; id already included 
+unique(sub("_.*","",raw$res$`Sample Names (Library_Barcode)`))
+unique(sub("_.*","",colnames(raw$cnt))) #Clust_sample_barcode 
+
+
+# check molecules range for each cell 
+cnt <- raw$cnt; rm(raw)
+setDF(cnt)
+cnt <- cnt %>% column_to_rownames("V1")
+range(apply(cnt, 2, sum)) 
+
+dat.exp <- fread("./data/human/GTEx_droncseq_hip_pcf.umi_counts.txt")
+setDF(dat.exp)
+dat.exp <- dat.exp%>% column_to_rownames("V1")
+
+dim(dat.exp) # 32111 by 14963 
+
+# seurat object 
+droncseq.human <- CreateSeuratObject(raw.data = dat.exp, min.cells = 3, min.genes = 200, 
+                                     project = "snRNAseq")
+
+#  mito
+mito.genes <- grep(pattern = "^MT-", x = rownames(x = droncseq.human@data), value = TRUE)
+percent.mito <- Matrix::colSums(droncseq.human@raw.data[mito.genes, ])/Matrix::colSums(droncseq.human@raw.data)
+droncseq.human<- AddMetaData(object = droncseq.human, metadata = percent.mito, col.name = "percent.mito")
+VlnPlot(object = droncseq.human, features.plot = c("nGene", "nUMI", "percent.mito"), nCol = 3)
+
+# normalization 
+droncseq.human <- NormalizeData(object = droncseq.human, normalization.method = "LogNormalize", 
+                                scale.factor = 10000)
+
+# variable genes
+droncseq.human <- FindVariableGenes(object = droncseq.human, mean.function = ExpMean, dispersion.function = LogVMR, 
+                                    x.low.cutoff = 0.0125, x.high.cutoff = 3, y.cutoff = 0.5)
+
+length(x = droncseq.human@var.genes)
+
+# scale data 
+droncseq.human <- ScaleData(object = droncseq.human, vars.to.regress = c("nUMI", "percent.mito"))
+dim(droncseq.human@scale.data) #26805 14963
+droncseq.human <- droncseq.human@scale.data
+genes <- intersect(rownames(our.human),rownames(droncseq.human))
+our.human <- our.human[genes,]
+droncseq.human <- droncseq.human[genes,]
+saveRDS(droncseq.human,file="droncseq.scaled.log.umi.Rds")
+droncseq.human <- readRDS(file = "droncseq.scaled.log.umi.Rds")
 
 # avg  druncseq expression data  --------------------------------------
 # cell id 
@@ -64,7 +82,7 @@ head(droncseq.human.id)
 droncseq.human.long <- as.data.frame(droncseq.human) %>% 
   rownames_to_column("gene") %>% 
   gather(key = Cell.ID,value = scaled.log.umi,-"gene") 
-  
+
 df1 <- data.table(droncseq.human.long,key = "Cell.ID")
 df2 <- data.table(droncseq.human.id,key = "Cell.ID")
 
@@ -80,9 +98,9 @@ droncseq.human.avg <- droncseq.human.long %>%
   summarise(avg.exp = mean(scaled.log.umi))
 
 droncseq.human.avg.simple <- droncseq.human.long %>% 
-    dplyr::select(-one_of("Genes","Transcripts","Cell.ID","Cluster.ID"))%>%
+  dplyr::select(-one_of("Genes","Transcripts","Cell.ID","Cluster.ID"))%>%
   group_by(gene,Cluster.Name.simple) %>% 
-    summarise(avg.exp = mean(scaled.log.umi))
+  summarise(avg.exp = mean(scaled.log.umi))
 
 transfunc <- function(x) log2(sum(2^x-1)/length(x)+1)
 
@@ -132,3 +150,7 @@ saveRDS(list(druncseq.human.avg= droncseq.human.avg.s,
              druncseq.human.avg.s=droncseq.human.avg.ss,
              druncseq.human = droncseq.human.long,
              our.human=our.human),file = "fig2e.Rds")
+
+
+
+
