@@ -44,6 +44,7 @@ droncseq.human <- FindVariableGenes(object = droncseq.human, mean.function = Exp
 length(x = droncseq.human@var.genes)
 
 # scale data 
+#Sys.setenv("R_MAX_VSIZE" = 8e9) 
 droncseq.human <- ScaleData(object = droncseq.human, vars.to.regress = c("nUMI", "percent.mito"))
 dim(droncseq.human@scale.data) #26805 14963
 droncseq.human <- droncseq.human@scale.data

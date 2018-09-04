@@ -6,8 +6,13 @@ source('./libs.R')
 # load our expression data  -----------------------------------------------
 
 # expression 
-our.human <- read.table("./data/new_analysis/human/fc_hc_latest_svd_umi_upregmarkers_nodup.txt")
-dim(our.human)#3508 
+our.human <- fread("./data/intro_clustered_1809/fc_hc_intronclustered_umi_upregmarkers.txt")
+setDF(our.human)
+
+dim(our.human)# 4186 genes 
+sum(duplicated(our.human$V1)) #1557 duplicates
+
+our.human <- unique.array(our.human)
 
 # load druncseq expression data  --------------------------------------
 
