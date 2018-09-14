@@ -12,7 +12,9 @@ setDF(our.human)
 dim(our.human)# 4186 genes 
 sum(duplicated(our.human$V1)) #1557 duplicates
 
-our.human <- unique.array(our.human)
+our.human <- unique.array(our.human)%>%
+  as.data.frame()%>%remove_rownames()%>%
+  column_to_rownames("V1")
 
 # load druncseq expression data  --------------------------------------
 
@@ -108,6 +110,9 @@ rm(droncseq.human.id)
 
 # correlation matrix  -----------------------------------------------------
 our.human <- our.human[rownames(droncseq.human.avg.s),]
+our.clust.dic <- read.table("./data/intro_clustered_1809/fc_hc_intronclustered_cluster.txt")
+rownames(our.clust.dic) <-paste0("c",our.clust.dic$V1)
+colnames(our.human)<- our.clust.dic[colnames(our.human),"V2"]
 calcCormat <- function(a,b) apply(a,2,function(x) apply(b,2,function(y) cor(x,y,method = "spearman")))
 
 cor.mat <- calcCormat(our.human,droncseq.human.avg.s)
@@ -123,12 +128,12 @@ if(T){
   pdf(file =   "fig2e.pdf",width = 7,height = 7)
   cols=colorRampPalette(c(rgb(14/255,135/255,182/255),
                           "white",
-                          rgb(203/255,72/255,85/255)))(20)
+                          rgb(203/255,72/255,85/255)))(22)
   pheatmap(cor.mat,scale = "none",cluster_cols = T,cluster_rows = T,cols,
-           cellwidth = 12,cellheight = 12,breaks = seq(-0.5,0.5,by = 0.05),
+           cellwidth = 12,cellheight = 12,breaks = seq(-0.55,0.55,by = 0.05),
            main = "Pair-wised Spearman's correlation \nof avg expression between our data (row) and \n drunc-seq (column) from our signature genes (Human)")
   pheatmap(cor.mat.s,scale = "none",cluster_cols = T,cluster_rows = T,cols,
-           cellwidth = 12,cellheight = 12,breaks = seq(-0.5,0.5,by = 0.05),
+           cellwidth = 12,cellheight = 12,breaks = seq(-0.55,0.55,by = 0.05),
            main = "Pair-wised Spearman's correlation \nof avg expression between our data (row) and \n drunc-seq (column) from our signature genes (reduced,human)")
   dev.off()
 }
