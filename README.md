@@ -24,8 +24,8 @@ A repo to reproduce figures in  the snRNA-seq manuscript
   to subcluster GABA neurons. 
   * [reproduce_mouse.R](./Habib2017/reproduce_mouse.R) and
     [reproduce_human.R](./Habib2017/reproduce_human.R) are just codes to
-    reproduce the figures. For example, [fig1b](fig1b.png) and
-    [fig1c](fig1c.png) from Habib et al. 2017.
+    reproduce the figures. For example, [fig1b](./Habib2017/fig1b.png) and
+    [fig1c](./Habib2017/fig1c.png) from Habib et al. 2017.
 
 
 * Folder [figcode](./figcodes): contains two R scripts to produce correlation
