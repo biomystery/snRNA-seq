@@ -2,22 +2,25 @@ A repo to reproduce figures in  the snRNA-seq manuscript
 -----------------------
 ## The codes are organized into two part:
 
- 1. Reproduce figures of [Habib et al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28846088), aka. droncseq
+ 1. Reproduce figures of [Habib et
+    al. 2017](https://www.ncbi.nlm.nih.gov/pubmed/28846088),
+    aka. droncseq. Including a random forest classifier to classify GABA
+    subtypes based on feature genes' expression. 
  2. Correlate our data with these two datasets
 
 
-## Details are 
+## Details 
 
 * Folder [Habib2017](./Habib2017): contains codes to reproduce figures
-  of [Habib2017](https://www.ncbi.nlm.nih.gov/pubmed/28846088)
+  of [Habib et al 2017](https://www.ncbi.nlm.nih.gov/pubmed/28846088)
   *  [druncseq_gaba_dataprepare.R](./Habib2017/druncseq_gaba_dataprepare.R)
-  and [habib2016.R](./Habib2017/habib2016) are codes to generate
+  and [habib2016.R](./Habib2017/habib2016.R) are codes to generate
   `druncseq_gaba` dataset and `snucseq.gaba.Rdata` to construct Random
-  Forest classifiers based on variable genes 
-  * [reproduce_mouse_clusering](./Habib2017/reproduce_mouse_clusering.R):
+  Forest classifiers ([RF_classifier](./Habib2017/RF_classifier.R)) based on variable genes 
+  * [reproduce_mouse_clusering.R](./Habib2017/reproduce_mouse_clusering.R):
   code to take raw UMI matrix and perform clustering and feature
   selection. 
-  * [reproduce_mouse_gaba_subclusering](./Habib2017/reproduce_mouse_gaba.R):code
+  * [reproduce_mouse_gaba_subclusering.R](./Habib2017/reproduce_mouse_gaba.R):code
   to subcluster GABA neurons. 
   * [reproduce_mouse.R](./Habib2017/reproduce_mouse.R) and
     [reproduce_human.R](./Habib2017/reproduce_human.R] are just codes to
