@@ -6,7 +6,7 @@ require(pheatmap)
 require(ggplot2)
 require(plotly)
 require(rbokeh)
-
+require(gridExtra)
 
 vlnplotly<- function (object, features.plot)
 {
