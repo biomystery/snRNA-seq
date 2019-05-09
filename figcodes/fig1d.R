@@ -1,70 +1,70 @@
-# Mouse data compared to druncseq 
+# Mouse data compared to druncseq (Habib2017, mouse dataset)
 
-## pariwise correlation of the average expression for the genes 
+## pariwise correlation of the average expression for the genes
 ## in each cell-type signature defined by our data and cell types defined by Drunc-seq
 
 source('./libs.R')
 # load signature genes for cell type defined by us  -----------------------
 
 
-anno.sigGenes <- read.table('./data/new_analysis/mouse/intron/mouse.marker.genes.txt',
+anno.sigGenes <- read.table('../data/new_analysis/mouse/intron/mouse.marker.genes.txt',
                             stringsAsFactors = F,header = F)$V1
 length(anno.sigGenes)#4090
 
 # load druncseq avg expression data  --------------------------------------
 
-# expression 
+# expression
 
-dat.exp.log <- fread("./data/mouse/Mouse_Processed_GTEx_Data.DGE.log-UMI-Counts.txt")
+dat.exp.log <- fread("../data/mouse/Mouse_Processed_GTEx_Data.DGE.log-UMI-Counts.txt")
 dat.exp.log <- dat.exp.log[GENE%in% anno.sigGenes]
 dat.exp.log.t <- dcast(melt(dat.exp.log,id.vars = "GENE"),variable ~ GENE)
 
-# cell id 
-dat <- read.csv(file = "./data/mouse/Table3_Data_Info_mouse.csv",skip = 27,stringsAsFactors = F)[,-8]
+# cell id
+dat <- read.csv(file = "../data/mouse/Table3_Data_Info_mouse.csv",skip = 27,stringsAsFactors = F)[,-8]
 colnames(dat) <-sub("X.","",colnames(dat))
 
 # merge data
 dat.exp.log.m <- merge(dat.exp.log.t,dat[,c("Cell.ID","Cluster.name")],by.y = "Cell.ID", by.x = "variable")
 colnames(dat.exp.log.m)[1]<- "Cell.ID"
 
-# change to long 
+# change to long
 dat.exp.log.l <- melt(dat.exp.log.m,id.vars = c("Cell.ID","Cluster.name"))
 head(dat.exp.log.l)
 
 # avg
-dat.exp.log.avg <- dat.exp.log.l %>% group_by(variable,Cluster.name) %>% 
+dat.exp.log.avg <- dat.exp.log.l %>% group_by(variable,Cluster.name) %>%
   summarise(mean.exp=mean(value,na.rm=T))
 
-dat.exp.log.avg <- dat.exp.log.l %>% group_by(variable,Cluster.name) %>% 
+dat.exp.log.avg <- dat.exp.log.l %>% group_by(variable,Cluster.name) %>%
   summarise(mean.exp=transfunc(value))
 
 transfunc <- function(x) log2(sum(2^x-1)/length(x)+1)
 
-dat.exp.log.avg.2<- dat.exp.log.avg; 
+dat.exp.log.avg.2<- dat.exp.log.avg;
 dat.exp.log.avg.2$Cluster.name <- sub("[0-9]","",dat.exp.log.avg$Cluster.name)
-dat.exp.log.avg.2<- dat.exp.log.avg.2 %>% group_by(variable,Cluster.name) %>% 
+dat.exp.log.avg.2<- dat.exp.log.avg.2 %>% group_by(variable,Cluster.name) %>%
   summarise(mean.exp=mean(mean.exp,na.rm=T))
 
 
-# spread 
+# spread
 dat.exp.log.avg.s <- dat.exp.log.avg%>% spread(key = Cluster.name,value = mean.exp)
 druncseq.mouse <- dat.exp.log.avg.s[,-ncol(dat.exp.log.avg.s)]
 
 druncseq.mouse <- as.data.frame(druncseq.mouse)
-rownames(druncseq.mouse) <- druncseq.mouse$variable; druncseq.mouse$variable <- NULL 
+rownames(druncseq.mouse) <- druncseq.mouse$variable; druncseq.mouse$variable <- NULL
 
 druncseq.mouse.2 <- dat.exp.log.avg.2%>% spread(key = Cluster.name,value = mean.exp)
 druncseq.mouse.2<- druncseq.mouse.2[,-ncol(druncseq.mouse.2)]
 
 druncseq.mouse.2 <- as.data.frame(druncseq.mouse.2)
-rownames(druncseq.mouse.2) <- druncseq.mouse.2$variable; druncseq.mouse.2$variable <- NULL 
+rownames(druncseq.mouse.2) <- druncseq.mouse.2$variable; druncseq.mouse.2$variable <- NULL
 
 
 # load our expression data  -----------------------------------------------
 
-# expression 
+# expression
 dat.exp <- lapply(1:14,function(x){
-  fn <- paste0("./data/new_analysis/mouse/intron/average_expression/AFB_merged_intronic_clusteringcluster",x,"averageumi.txt") 
+  fn <- paste0("../data/new_analysis/mouse/intron/average_expression/AFB_merged_intronic_clusteringcluster",x,"averageumi.txt")
   read.table(fn,header = T,stringsAsFactors = F,col.names = paste0("C",x))
 })
 
@@ -77,7 +77,7 @@ all.equal(rownames(our.mouse),rownames(druncseq.mouse))
 
 
 # Our cluster anno --------------------------------------------------------
-our.mouse.clust <- read.csv('./data/new_analysis/mouse/intron/mouse.cluster.anno.txt',
+our.mouse.clust <- read.csv('../data/new_analysis/mouse/intron/mouse.cluster.anno.txt',
                               header = F,stringsAsFactors = F,col.names = c("clust","cell.type"))
 rownames(our.mouse.clust)<- paste0("C",our.mouse.clust$clust)
 
@@ -97,7 +97,7 @@ ggplot(pd,aes(Druncseq,ours))+
 
 
 if(T){
-  pdf(file =   "fig1d.pdf",width = 7,height = 7)
+    pdf(file =   "../figs/fig1d.pdf",width = 7,height = 7)
   cols=colorRampPalette(c(                        "white",
                           rgb(203/255,72/255,85/255)))(11)
   pheatmap(cor.mat,scale = "none",cluster_cols = T,cluster_rows = T,colorRampPalette(brewer.pal(9,"Reds"))(11),
@@ -114,8 +114,8 @@ if(T){
   pheatmap(cor.mat.2,scale = "none",cluster_cols = T,cluster_rows = T,colorRampPalette(brewer.pal(9,"Reds"))(11),
            cellwidth = 12,cellheight = 12,breaks = seq(0.3,0.85,by = 0.05),
            main = "Mouse pair-wised Spearman's correlation \nof avg expression between our data (row) and \n drunc-seq (column) from our signature genes (reduced)")
-  
-  
+
+
   dev.off()
 
 }
