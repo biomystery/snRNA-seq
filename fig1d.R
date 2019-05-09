@@ -6,20 +6,17 @@
 source('./libs.R')
 # load signature genes for cell type defined by us  -----------------------
 
-anno.cell <- read.table("./data/new_analysis/mouse/AFB_new_analysis/afb_merged_svdmeta_data")
-anno.sigGenes <- lapply(1:11,function(x){
-  fn <- paste0("./data/new_analysis/mouse/AFB_new_analysis/afb_merged_final.markergenes",x,".csv") 
-  data.frame(genes=read.csv(fn,header = T,stringsAsFactors = F)$X,clust=x)
-})
-anno.sigGenes <- do.call(rbind,anno.sigGenes)
-dim(anno.sigGenes)#5707 
+
+anno.sigGenes <- read.table('./data/new_analysis/mouse/intron/mouse.marker.genes.txt',
+                            stringsAsFactors = F,header = F)$V1
+length(anno.sigGenes)#4090
 
 # load druncseq avg expression data  --------------------------------------
 
 # expression 
 
 dat.exp.log <- fread("./data/mouse/Mouse_Processed_GTEx_Data.DGE.log-UMI-Counts.txt")
-dat.exp.log <- dat.exp.log[GENE%in% anno.sigGenes$genes]
+dat.exp.log <- dat.exp.log[GENE%in% anno.sigGenes]
 dat.exp.log.t <- dcast(melt(dat.exp.log,id.vars = "GENE"),variable ~ GENE)
 
 # cell id 
@@ -66,15 +63,23 @@ rownames(druncseq.mouse.2) <- druncseq.mouse.2$variable; druncseq.mouse.2$variab
 # load our expression data  -----------------------------------------------
 
 # expression 
-dat.exp.log <- fread("./data/new_analysis/mouse/AFB_new_analysis/afb_merged_final_umi_allgenes.txt")
-our.mouse <- dat.exp.log[V1 %in% rownames(druncseq.mouse)]
-setDF(our.mouse)
-rownames(our.mouse) <- our.mouse$V1;our.mouse$V1 <- NULL 
+dat.exp <- lapply(1:14,function(x){
+  fn <- paste0("./data/new_analysis/mouse/intron/average_expression/AFB_merged_intronic_clusteringcluster",x,"averageumi.txt") 
+  read.table(fn,header = T,stringsAsFactors = F,col.names = paste0("C",x))
+})
 
-our.mouse <- our.mouse[rownames(druncseq.mouse),]
+dat.exp <- do.call(cbind,dat.exp)
+
+our.mouse <- dat.exp[ rownames(druncseq.mouse),]
+setDF(our.mouse)
 
 all.equal(rownames(our.mouse),rownames(druncseq.mouse))
 
+
+# Our cluster anno --------------------------------------------------------
+our.mouse.clust <- read.csv('./data/new_analysis/mouse/intron/mouse.cluster.anno.txt',
+                              header = F,stringsAsFactors = F,col.names = c("clust","cell.type"))
+rownames(our.mouse.clust)<- paste0("C",our.mouse.clust$clust)
 
 # correlation matrix  -----------------------------------------------------
 our.mouse <- log2(our.mouse+1)
@@ -101,6 +106,16 @@ if(T){
   pheatmap(cor.mat.2,scale = "none",cluster_cols = T,cluster_rows = T,colorRampPalette(brewer.pal(9,"Reds"))(11),
            cellwidth = 12,cellheight = 12,breaks = seq(0.3,0.85,by = 0.05),
            main = "Mouse pair-wised Spearman's correlation \nof avg expression between our data (row) and \n drunc-seq (column) from our signature genes (reduced)")
+  colnames(cor.mat) <- our.mouse.clust[colnames(cor.mat),'cell.type']
+  colnames(cor.mat.2) <- our.mouse.clust[colnames(cor.mat.2),'cell.type']
+  pheatmap(cor.mat,scale = "none",cluster_cols = T,cluster_rows = T,colorRampPalette(brewer.pal(9,"Reds"))(11),
+           cellwidth = 12,cellheight = 12,breaks = seq(0.3,0.85,by = 0.05),
+           main = "Mouse pair-wised Spearman's correlation \nof avg expression between our data (row) and \n drunc-seq (column) from our signature genes")
+  pheatmap(cor.mat.2,scale = "none",cluster_cols = T,cluster_rows = T,colorRampPalette(brewer.pal(9,"Reds"))(11),
+           cellwidth = 12,cellheight = 12,breaks = seq(0.3,0.85,by = 0.05),
+           main = "Mouse pair-wised Spearman's correlation \nof avg expression between our data (row) and \n drunc-seq (column) from our signature genes (reduced)")
+  
+  
   dev.off()
 
 }
