@@ -10,8 +10,7 @@ A repo to reproduce figures in  the snRNA-seq manuscript
 
 * Folder [Habib2017](./Habib2017): contains codes to reproduce figures
   of [Habib2017](https://www.ncbi.nlm.nih.gov/pubmed/28846088)
-  *
-  [druncseq_gaba_dataprepare.R](./Habib2017/druncseq_gaba_dataprepare.R)
+  *  [druncseq_gaba_dataprepare.R](./Habib2017/druncseq_gaba_dataprepare.R)
   and [habib2016.R](./Habib2017/habib2016) are codes to generate
   `druncseq_gaba` dataset and `snucseq.gaba.Rdata` to construct Random
   Forest classifiers based on variable genes 
