@@ -16,7 +16,7 @@ A repo to reproduce figures in  the snRNA-seq manuscript
   *  [druncseq_gaba_dataprepare.R](./Habib2017/druncseq_gaba_dataprepare.R)
   and [habib2016.R](./Habib2017/habib2016.R) are codes to generate
   `druncseq_gaba` dataset and `snucseq.gaba.Rdata` to construct Random
-  Forest classifiers ([RF_classifier](./Habib2017/RF_classifier.R)) based on variable genes 
+  Forest classifiers ([RF_classifier.R](./Habib2017/RF_classifier.R)) based on variable genes 
   * [reproduce_mouse_clusering.R](./Habib2017/reproduce_mouse_clusering.R):
   code to take raw UMI matrix and perform clustering and feature
   selection. 
